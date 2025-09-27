@@ -1,4 +1,4 @@
-# gpcs-hackumbc-2025
+# Hit or Holdings-hackumbc-2025
 Official Github Repo for Hit or Holdings
 
 ## Team - Celestine Sumah, Gabriel Pagudar
