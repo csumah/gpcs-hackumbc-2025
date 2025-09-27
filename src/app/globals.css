@@ -63,3 +63,14 @@ body {
   transform: translateY(4px);
   box-shadow: 0 0 0 3px #ffffff, 0 2px 0 3px #0f4f2b, 0 2px 0 6px #062515;
 }
+
+/* Fixed-positioned top-right sprite that stays when scrolling */
+.house-sprite {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  width: clamp(160px, 22vw, 320px);
+  height: clamp(160px, 22vw, 320px);
+  pointer-events: none;
+  z-index: 40;
+}

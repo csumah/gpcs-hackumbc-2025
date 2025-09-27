@@ -29,18 +29,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {/* House character sprite (top-right). Consider renaming file to house_idle.png later */}
-        <div
-          className="pixel-art"
-          style={{
-            position: "fixed",
-            top: "1rem",
-            right: "1rem",
-            width: "clamp(160px, 22vw, 320px)",
-            height: "clamp(160px, 22vw, 320px)",
-            pointerEvents: "none",
-            zIndex: 40,
-          }}
-        >
+        <div className="pixel-art house-sprite">
           <Image
             src="/assets/sprites/Investy - Resting-1.png.png"
             alt="The House"
