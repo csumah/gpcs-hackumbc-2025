@@ -1,5 +1,42 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Game Docs & Assets
+
+Project-specific documents live in `doc/`:
+- `game-design.md` – High level & mechanics (exportable to PDF for sharing)
+- `asset-guidelines.md` – How to add & name assets
+- (Add) `asset-attribution.md` – Third‑party license & credit list (create when needed)
+
+Static game/media files live in `public/assets/` and are served at `/assets/...`.
+Subfolders:
+```
+public/assets/
+  sprites/
+  ui/
+  audio/
+  misc/
+```
+Add new files there and reference them with paths like `/assets/sprites/player_idle_0@1x.png`.
+
+### Exporting the Game Design PDF
+
+Option 1 (VS Code):
+1. Open `doc/game-design.md`
+2. Ctrl+Shift+P → "Markdown: Print to HTML" → open HTML in browser → Print → Save as PDF
+
+Option 2 (CLI tool):
+Install once:
+```bash
+npm install --save-dev md-to-pdf
+```
+Run:
+```bash
+npx md-to-pdf doc/game-design.md --config-file=none --dest doc/game-design.pdf
+```
+(Add the command as an npm script if used often.)
+
+---
+
 ## Getting Started
 
 First, run the development server:
