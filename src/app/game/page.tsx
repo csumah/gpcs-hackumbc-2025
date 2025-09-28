@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { initializeGame, processQuarter, PlayerState, PlayerAction, gameData } from '@/lib/gamelogic';
+import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 export default function GamePage() {
   const [gameState, setGameState] = useState<PlayerState>(initializeGame());
@@ -41,11 +42,23 @@ export default function GamePage() {
   const investmentProfit = totalValue - contributed;
 
   if (gameState.isGameOver) {
+    // Build final chart data: map yearly portfolio history to include invested amount and savings-only baseline
+    const finalChartData = gameState.portfolioHistory.map(ph => {
+      const savings = gameState.savingsHistory.find(s => s.year === ph.year)?.value ?? null;
+      return {
+        label: ph.year === 0 ? 'Start' : `Y${ph.year}`,
+        cash: ph.cash,
+        invested: ph.volatileETF + ph.longTermETF,
+        portfolio: ph.value,
+        savingsOnly: savings,
+      };
+    });
+
     return (
       <main className="min-h-screen bg-board flex items-center justify-center p-10 text-black">
         <div className="pixel-panel" style={{ maxWidth: 1400, width: '100%', padding: '64px 72px' }}>
           <h1 className="text-7xl font-bold mb-10 text-center">Game Over!</h1>
-          <div className="grid gap-12 md:grid-cols-3 mb-12">
+          <div className="grid gap-12 md:grid-cols-3 mb-8">
             <div className="value-card" style={{ fontSize: '1.5rem' }}>
               <p className="font-semibold mb-2">Final Portfolio Value</p>
               <p className="text-5xl font-bold">${totalValue.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</p>
@@ -59,7 +72,24 @@ export default function GamePage() {
               <p className={`text-5xl font-bold ${investmentProfit >= 0 ? 'text-green-700' : 'text-red-700'}`}>${investmentProfit.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</p>
             </div>
           </div>
-          <div className="flex flex-wrap justify-center gap-8 mb-14">
+
+          <div style={{ width: '100%', height: 420 }} className="mb-8">
+            <ResponsiveContainer>
+              <ComposedChart data={finalChartData} margin={{ top: 10, right: 30, left: 10, bottom: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="label" />
+                <YAxis tickFormatter={(v) => `$${(Number(v) / 1000)}k`} />
+                <Tooltip formatter={(value: any, name: any) => [`$${Number(value).toFixed(2)}`, name]} />
+                <Legend />
+                <Line type="monotone" dataKey="cash" name="Cash (available)" stroke="#4CAF50" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 6 }} />
+                <Line type="monotone" dataKey="invested" name="Invested" stroke="#FFA726" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 6 }} />
+                <Line type="monotone" dataKey="portfolio" name="Portfolio Value" stroke="#1976D2" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 6 }} />
+                <Line type="monotone" dataKey="savingsOnly" name="Savings Only" stroke="#8884d8" strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 6 }} strokeDasharray="6 4" connectNulls={true} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="flex flex-wrap justify-center gap-8 mb-6">
             <div className="value-card" style={{ minWidth: 280 }}>
               <p className="font-semibold mb-1">Volatile ETF</p>
               <p className="text-3xl font-bold">${gameState.investments.volatileETF.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</p>
