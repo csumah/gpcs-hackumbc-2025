@@ -4,6 +4,16 @@ import Link from "next/link";
 export default function Home() {
   return (
     <main className="min-h-screen flex flex-col items-center justify-start pt-[6vh] bg-board text-white p-6 select-none">
+      {/* House character sprite (now only on title screen) */}
+      <div className="pixel-art house-sprite pointer-events-none">
+        <Image
+          src="/assets/sprites/Investy - Resting-1.png.png"
+          alt="The House"
+          fill
+          className="object-contain"
+          priority
+        />
+      </div>
       {/* Title */}
       <div
         className="relative pixel-art"

@@ -46,22 +46,22 @@ export default function GamePage() {
     : undefined;
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4 sm:p-8 md:p-12 bg-gray-900 text-white font-sans">
-      <div className="w-full max-w-4xl mx-auto">
+    <main className="flex min-h-screen flex-col items-center justify-center p-4 sm:p-8 md:p-10 bg-board text-white font-sans">
+      <div className="w-full max-w-5xl mx-auto">
         <header className="text-center mb-6">
-          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">Hit or Holdings</h1>
-          <p className="text-gray-400 mt-2">An Investor Education Challenge by T. Rowe Price</p>
+          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight drop-shadow-[0_4px_0_#000]">Hit or Holdings</h1>
+          <p className="mt-2 text-green-200/90 text-sm sm:text-base bg-black/30 inline-block px-3 py-1 rounded">An Investor Education Challenge by T. Rowe Price</p>
         </header>
 
         {gameState.isGameOver ? (
-          <div className="text-center bg-gray-800 p-8 rounded-lg shadow-2xl">
+          <div className="text-center bg-black/50 backdrop-blur-sm p-8 rounded-lg shadow-2xl border border-white/10">
             <h2 className="text-3xl font-bold text-green-400">Game Over!</h2>
             <p className="text-xl mt-4">
               After 5 years, your final portfolio value is:
             </p>
             <p className="text-5xl font-bold my-4 text-white">${gameState.portfolioHistory.at(-1)?.value.toFixed(2)}</p>
             <p className="text-gray-400">You started with $10,000.</p>
-             <button onClick={() => setGameState(initializeGame())} className="mt-8 px-6 py-3 bg-blue-600 rounded-lg font-bold hover:bg-blue-700 transition-colors">
+             <button onClick={() => setGameState(initializeGame())} className="mt-8 px-6 py-3 bg-blue-600 rounded-lg font-bold hover:bg-blue-700 transition-colors shadow-[0_4px_0_#000]">
                 Play Again
             </button>
           </div>
