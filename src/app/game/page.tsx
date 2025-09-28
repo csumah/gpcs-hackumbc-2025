@@ -40,6 +40,68 @@ export default function GamePage() {
   const contributed = 10000 + (quartersElapsed * 2500);
   const investmentProfit = totalValue - contributed;
 
+  // (Removed prior sector-specific supplemental lines for more indirect news tone)
+
+  // News-style blurbs categorized by sentiment
+  const newsBlurbs = {
+    euphoric: [
+      'Several large product launches draw long lines in major cities.',
+      'Conference chatter highlights upbeat tone among hardware vendors.',
+      'Industry surveys show hiring plans inching higher.'
+    ],
+    positive: [
+      'Analysts note steady order backlogs across multiple groups.',
+      'Management call transcripts mention cautious optimism.',
+      'Incremental cost pressures appear to be easing.'
+    ],
+    neutral: [
+      'Executives reiterate prior full-year outlook without changes.',
+      'Media coverage focuses on incremental feature rollouts.',
+      'Market participants await upcoming data releases.'
+    ],
+    caution: [
+      'Commentary points to selective budget reviews before year-end.',
+      'Some firms reference slower deal approvals in internal notes.',
+      'Shipping timelines get modestly extended in certain categories.'
+    ],
+    negative: [
+      'Reports surface of postponed expansion plans at a few mid-sized firms.',
+      'Procurement teams flag tighter discretionary spending controls.',
+      'Channel partners mention lighter-than-expected reorders.'
+    ],
+    panic: [
+      'Emergency cost containment steps circulate in internal memos.',
+      'Vendors discuss accelerated inventory clearance efforts.',
+      'Hiring pauses broaden to more departments.'
+    ]
+  } as const;
+
+  // Deterministic pick per quarter based on year+quarter hash to keep stable on re-renders
+  function pickNewsBlurb(vRet: number, lRet: number): string | null {
+    const keySeed = (gameState.year * 10 + gameState.quarter);
+    let bucket: keyof typeof newsBlurbs | null = null;
+    if (vRet >= 0.18) bucket = 'euphoric';
+    else if (vRet >= 0.08) bucket = 'positive';
+    else if (vRet >= 0.02) bucket = 'neutral';
+    else if (vRet > -0.05) bucket = 'caution';
+    else if (vRet > -0.20) bucket = 'negative';
+    else bucket = 'panic';
+    const arr = newsBlurbs[bucket];
+    const index = keySeed % arr.length;
+    return arr[index];
+  }
+
+  const newsLine = currentEvent ? pickNewsBlurb(currentEvent.returns.volatileETF, currentEvent.returns.longTermETF) : null;
+  // Build small bullet list (2 items) from remaining pool excluding the chosen headline
+  let newsBullets: string[] = [];
+  if (currentEvent) {
+    const vRet = currentEvent.returns.volatileETF;
+    const bucket = vRet >= 0.18 ? 'euphoric' : vRet >= 0.08 ? 'positive' : vRet >= 0.02 ? 'neutral' : vRet > -0.05 ? 'caution' : vRet > -0.20 ? 'negative' : 'panic';
+    const arr = newsBlurbs[bucket];
+    const headline = newsLine;
+    newsBullets = arr.filter(b => b !== headline).slice(0,2);
+  }
+
   if (gameState.isGameOver) {
     return (
       <main className="min-h-screen bg-board flex items-center justify-center p-10 text-black">
@@ -84,21 +146,43 @@ export default function GamePage() {
   return (
     <main className="min-h-screen bg-board p-6 flex flex-col items-center text-black">
       <div className="w-full max-w-[1500px]">
-        <div className="pixel-panel mb-6 inline-block text-lg font-bold">Year {gameState.year} / Q{gameState.quarter}</div>
+        <div className="pixel-panel mb-6 inline-block font-bold" style={{ fontSize:'26px', padding:'14px 34px', minWidth:260, textAlign:'center' }}>
+          Year {gameState.year} / Q{gameState.quarter}
+        </div>
         <div className="layout-grid mb-6">
           <div>
             <div className="graph-placeholder">Graph</div>
           </div>
           <div className="flex flex-col items-start gap-10">
-            <div className="speech-bubble w-full min-h-[260px] flex items-center justify-center text-center" style={{ padding:'40px 48px' }}>
-              <div>
+            <div className="speech-bubble w-full min-h-[320px] flex items-start justify-start" style={{ padding:'50px 60px', position:'relative', textAlign:'left' }}>
+              <div style={{ width:'100%' }}>
                 {currentEvent ? (
                   <>
-                    <p className="mb-5" style={{ fontSize:'28px', fontWeight:700 }}>Insight</p>
-                    <p className="max-w-[680px] mx-auto" style={{ fontSize:'20px', lineHeight:1.4, fontWeight:500 }}>{currentEvent.houseInsight}</p>
+                    <p className="mb-5" style={{ fontSize:'40px', fontWeight:800, letterSpacing:'0.5px' }}>Insight</p>
+                    <p className="max-w-[1000px] mb-6" style={{ fontSize:'28px', lineHeight:1.45, fontWeight:600 }}>{currentEvent.houseInsight}</p>
+                    {newsLine && (
+                      <div className="max-w-[1000px] mt-5" style={{ fontSize:'22px', lineHeight:1.45, fontWeight:500 }}>
+                        <p style={{ fontWeight:800, marginBottom:10, fontSize:'26px', letterSpacing:'0.3px' }}>News Snapshot</p>
+                        <ul style={{ listStyle:'disc', paddingLeft: '1.6rem' }}>
+                          <li>{newsLine}</li>
+                          {newsBullets.map((b,i)=>(<li key={i}>{b}</li>))}
+                        </ul>
+                      </div>
+                    )}
                   </>
                 ) : <p style={{ fontSize:'20px' }}>...</p>}
               </div>
+              <img
+                src="/assets/sprites/Investy- Info-1.png.png"
+                alt="Investy"
+                style={{
+                  position:'absolute',
+                  bottom:-200,
+                  right:30,
+                  width:260,
+                  imageRendering:'pixelated'
+                }}
+              />
             </div>
           </div>
         </div>
@@ -167,16 +251,29 @@ export default function GamePage() {
             </div>
           </div>
         </div>
-        <div className="value-grid mb-24" style={{ fontSize:'18px' }}>
-          <div className="value-card" style={{ gridColumn: 'span 2 / auto', padding:'24px 28px', minHeight:140, display:'flex', alignItems:'center' }}>
-            {lastEventResult ? (
-              <>
-                <div>
-                  <p className="font-semibold mb-2" style={{ fontSize:'22px' }}>Last Quarter Result</p>
-                  <p style={{ fontSize:'18px', lineHeight:1.3 }}>{lastEventResult.marketCondition} | Volatile {(lastEventResult.volatileReturn * 100).toFixed(1)}% | Long {(lastEventResult.longTermReturn * 100).toFixed(1)}%</p>
+        <div className="value-grid mb-12" style={{ fontSize:'18px' }}>
+          <div className="value-card" style={{ gridColumn: 'span 2 / auto', padding:'26px 32px', minHeight:150, display:'flex', alignItems:'center' }}>
+            {lastEventResult ? (() => {
+              const v = lastEventResult.volatileReturn;
+              const l = lastEventResult.longTermReturn;
+              const cond = lastEventResult.marketCondition;
+              // Build an educational description
+              let descriptor = '';
+              if (v >= 0.15) descriptor = 'Momentum stayed strong; high‑beta positions rewarded investors who accepted larger swings.';
+              else if (v >= 0.05) descriptor = 'A constructive quarter: risk assets inched higher while steadier holdings compounded gradually.';
+              else if (v >= -0.02) descriptor = 'Markets were essentially flat overall; diversification helped keep results calm.';
+              else if (v >= -0.08) descriptor = 'A modest pullback reminded investors that short‑term declines are normal in pursuit of long‑term growth.';
+              else if (v >= -0.18) descriptor = 'A risk‑off phase pressured volatile holdings; balanced exposure limited deeper losses.';
+              else descriptor = 'A sharp drawdown tested risk tolerance; sticking to a plan can prevent emotional decisions.';
+              const diversification = l > v ? 'Long‑term ETF outperformed, cushioning variability.' : l < v ? 'Volatile ETF led performance, adding return but with higher noise.' : 'Both ETFs moved in lockstep this quarter.';
+              return (
+                <div style={{ textAlign:'left' }}>
+                  <p className="font-semibold mb-3" style={{ fontSize:'22px' }}>Last Quarter Result</p>
+                  <p style={{ fontSize:'20px', lineHeight:1.4, marginBottom:12, fontWeight:600 }}>{descriptor} {diversification}</p>
+                  <p style={{ fontSize:'20px', fontWeight:700, letterSpacing:'0.3px' }}>Condition: <span style={{ fontWeight:800 }}>{cond}</span> | Volatile <span style={{ fontWeight:800 }}>{(v * 100).toFixed(1)}%</span> | Long <span style={{ fontWeight:800 }}>{(l * 100).toFixed(1)}%</span></p>
                 </div>
-              </>
-            ) : <p style={{ fontSize:'22px', fontWeight:600 }}>Invest to see results next quarter.</p>}
+              );
+            })() : <p style={{ fontSize:'22px', fontWeight:600 }}>Invest to see results next quarter.</p>}
           </div>
         </div>
       </div>
