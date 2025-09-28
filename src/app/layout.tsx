@@ -25,19 +25,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {/* House character sprite (top-right). Consider renaming file to house_idle.png later */}
-        <div className="pixel-art house-sprite">
-          <Image
-            src="/assets/sprites/Investy - Resting-1.png.png"
-            alt="The House"
-            fill
-            className="object-contain"
-            priority
-          />
-        </div>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         {children}
       </body>
     </html>

@@ -43,7 +43,7 @@ export default function GamePage() {
 
   // Prepare combined data for the final chart
   const finalChartData = gameState.portfolioHistory.map((playerPoint, index) => {
-    // THE FIX: Check if the savings history entry exists before accessing it
+    // Check if the savings history entry exists before accessing it
     const savingsValue = gameState.savingsHistory[index] ? gameState.savingsHistory[index].value : null;
 
     return {
@@ -53,17 +53,17 @@ export default function GamePage() {
   });
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4 sm:p-8 md:p-12 bg-gray-900 text-white font-sans">
+    <main className="flex min-h-screen flex-col items-center justify-center p-4 sm:p-8 md:p-10 bg-board text-white font-sans">
       {showRecap && <YearlyRecap history={gameState.portfolioHistory} onClose={() => setShowRecap(false)} />}
       
-      <div className="w-full max-w-4xl mx-auto">
+      <div className="w-full max-w-5xl mx-auto">
         <header className="text-center mb-6">
-          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">Hit or Holdings</h1>
-          <p className="text-gray-400 mt-2">An Investor Education Challenge by T. Rowe Price</p>
+          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight drop-shadow-[0_4px_0_#000]">Hit or Holdings</h1>
+          <p className="mt-2 text-green-200/90 text-sm sm:text-base bg-black/30 inline-block px-3 py-1 rounded">An Investor Education Challenge by T. Rowe Price</p>
         </header>
 
         {gameState.isGameOver ? (
-          <div className="text-center bg-gray-800 p-6 sm:p-8 rounded-lg shadow-2xl border border-gray-700">
+          <div className="text-center bg-black/50 backdrop-blur-sm p-8 rounded-lg shadow-2xl border border-white/10">
             <h2 className="text-3xl font-bold text-green-400">Game Over!</h2>
             <p className="text-xl mt-4">Here's your final performance vs. just saving your money:</p>
             
@@ -74,8 +74,8 @@ export default function GamePage() {
                         <XAxis dataKey="year" stroke="#A0AEC0" />
                         <YAxis stroke="#A0AEC0" tickFormatter={(value) => `$${(Number(value) / 1000)}k`} />
                         <Tooltip 
-                           contentStyle={{ backgroundColor: '#1A202C', border: '1px solid #4A5568' }}
-                           formatter={(value, name) => [`$${Number(value).toFixed(2)}`, name]}
+                            contentStyle={{ backgroundColor: '#1A202C', border: '1px solid #4A5568' }}
+                            formatter={(value, name) => [`$${Number(value).toFixed(2)}`, name]}
                         />
                         <Legend />
                         <Area type="monotone" dataKey="cash" stackId="1" name="Cash" stroke="#2E7D32" fill="#4CAF50" />
@@ -86,8 +86,8 @@ export default function GamePage() {
                 </ResponsiveContainer>
             </div>
 
-             <button onClick={() => { setGameState(initializeGame()); setLastEventResult(null); }} className="mt-8 px-6 py-3 bg-blue-600 rounded-lg font-bold hover:bg-blue-700 transition-colors">
-                Play Again
+            <button onClick={() => { setGameState(initializeGame()); setLastEventResult(null); }} className="mt-8 px-6 py-3 bg-blue-600 rounded-lg font-bold hover:bg-blue-700 transition-colors shadow-[0_4px_0_#000]">
+              Play Again
             </button>
           </div>
         ) : (
@@ -100,4 +100,3 @@ export default function GamePage() {
     </main>
   );
 }
-
