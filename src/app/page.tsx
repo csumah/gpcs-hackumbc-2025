@@ -5,7 +5,7 @@ export default function Home() {
   return (
     <main className="min-h-screen flex flex-col items-center justify-start pt-[6vh] bg-board text-white p-6 select-none">
       {/* House character sprite (now only on title screen) */}
-      <div className="pixel-art house-sprite pointer-events-none">
+  <div className="pixel-art house-sprite pointer-events-none investy-float">
         <Image
           src="/assets/sprites/Investy - Resting-1.png.png"
           alt="The House"
@@ -33,7 +33,7 @@ export default function Home() {
       </div>
       {/* Start button (Option E narrower for hierarchy) */}
       <Link
-        href="/game"
+        href="/learn/etf-diversification"
         aria-label="Start Game"
         className="pixel-art start-btn"
         style={{

@@ -233,6 +233,7 @@ export default function GamePage() {
               <img
                 src="/assets/sprites/Investy- Info-1.png.png"
                 alt="Investy"
+                className="investy-info"
                 style={{
                   position:'absolute',
                   bottom:-200,
