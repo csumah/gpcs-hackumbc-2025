@@ -74,3 +74,24 @@ body {
   pointer-events: none;
   z-index: 40;
 }
+
+/* Start button animations */
+@keyframes start-pulse {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-3px) scale(1.02); }
+}
+.start-btn {
+  position: relative;
+  display: inline-block;
+  animation: start-pulse 2400ms ease-in-out infinite;
+  transition: transform 120ms steps(1), filter 120ms;
+}
+.start-btn:hover {
+  animation-play-state: paused;
+  transform: translateY(-2px) scale(1.015);
+  filter: brightness(1.05);
+}
+.start-btn:active {
+  transform: translate(2px,2px) scale(0.98);
+  filter: brightness(0.92);
+}
