@@ -6,21 +6,20 @@ import { initializeGame, processQuarter, PlayerState, PlayerAction, gameData } f
 export default function GamePage() {
   const [gameState, setGameState] = useState<PlayerState>(initializeGame());
   const [lastEventResult, setLastEventResult] = useState<{ marketCondition: string, volatileReturn: number, longTermReturn: number } | null>(null);
-  const [volatileAmount, setVolatileAmount] = useState(1000);
-  const [longAmount, setLongAmount] = useState(1000);
+  // Unified investment amount used for both ETFs when hitting
+  const [investAmount, setInvestAmount] = useState(1000);
 
   const handlePlayerAction = (action: PlayerAction) => {
     if (gameState.isGameOver) return;
-
-    const currentEvent = gameData.find(y => y.year === gameState.year)?.events.find(e => e.quarter === gameState.quarter);
+    const beforeEvent = gameData.find(y => y.year === gameState.year)?.events.find(e => e.quarter === gameState.quarter);
     const newState = processQuarter(gameState, action);
     if (newState !== gameState) setGameState(newState);
-
-    if (currentEvent) {
+    // Only reveal last quarter results after a STAND (i.e., after returns applied and quarter advanced)
+    if (action.type === 'STAND' && beforeEvent) {
       setLastEventResult({
-        marketCondition: currentEvent.marketCondition,
-        volatileReturn: currentEvent.returns.volatileETF,
-        longTermReturn: currentEvent.returns.longTermETF,
+        marketCondition: beforeEvent.marketCondition,
+        volatileReturn: beforeEvent.returns.volatileETF,
+        longTermReturn: beforeEvent.returns.longTermETF,
       });
     }
   };
@@ -29,23 +28,54 @@ export default function GamePage() {
     ? gameData.find(y => y.year === gameState.year)?.events.find(e => e.quarter === gameState.quarter)
     : undefined;
 
-  const executeHit = (etf: 'volatileETF' | 'longTermETF', amount: number) => {
-    const clamped = Math.max(0, Math.min(amount, gameState.cash));
+  const executeHit = (etf: 'volatileETF' | 'longTermETF', amount?: number) => {
+    const useAmount = amount ?? investAmount;
+    const clamped = Math.max(0, Math.min(useAmount, gameState.cash));
     if (clamped > 0) handlePlayerAction({ type: 'HIT', etf, amount: clamped });
   };
 
   const totalValue = gameState.cash + gameState.investments.volatileETF + gameState.investments.longTermETF;
-  const totalProfit = totalValue - 10000;
+  // Profit should exclude quarterly contributions ($2500 each quarter). Calculate quarters elapsed.
+  const quartersElapsed = (gameState.year - 1) * 4 + (gameState.quarter - 1); // current quarter not yet stood if mid-quarter
+  const contributed = 10000 + (quartersElapsed * 2500);
+  const investmentProfit = totalValue - contributed;
 
   if (gameState.isGameOver) {
     return (
-      <main className="min-h-screen bg-board flex items-center justify-center p-6 text-black">
-        <div className="pixel-panel" style={{ maxWidth: 720 }}>
-          <h1 className="text-4xl font-bold mb-4">Game Over!</h1>
-          <p className="mb-3 text-lg">Final Portfolio Value:</p>
-          <p className="text-5xl font-bold mb-4">${(totalValue).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</p>
-          <p className="mb-6">Profit: ${(totalProfit).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</p>
-          <button onClick={() => { setGameState(initializeGame()); setLastEventResult(null); setVolatileAmount(1000); setLongAmount(1000); }} className="invest-btn">Play Again</button>
+      <main className="min-h-screen bg-board flex items-center justify-center p-10 text-black">
+        <div className="pixel-panel" style={{ maxWidth: 1400, width: '100%', padding: '64px 72px' }}>
+          <h1 className="text-7xl font-bold mb-10 text-center">Game Over!</h1>
+          <div className="grid gap-12 md:grid-cols-3 mb-12">
+            <div className="value-card" style={{ fontSize: '1.5rem' }}>
+              <p className="font-semibold mb-2">Final Portfolio Value</p>
+              <p className="text-5xl font-bold">${totalValue.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</p>
+            </div>
+            <div className="value-card" style={{ fontSize: '1.5rem' }}>
+              <p className="font-semibold mb-2">Total Contributions</p>
+              <p className="text-5xl font-bold">${contributed.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</p>
+            </div>
+            <div className="value-card" style={{ fontSize: '1.5rem' }}>
+              <p className="font-semibold mb-2">Net Profit</p>
+              <p className={`text-5xl font-bold ${investmentProfit >= 0 ? 'text-green-700' : 'text-red-700'}`}>${investmentProfit.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</p>
+            </div>
+          </div>
+          <div className="flex flex-wrap justify-center gap-8 mb-14">
+            <div className="value-card" style={{ minWidth: 280 }}>
+              <p className="font-semibold mb-1">Volatile ETF</p>
+              <p className="text-3xl font-bold">${gameState.investments.volatileETF.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</p>
+            </div>
+            <div className="value-card" style={{ minWidth: 280 }}>
+              <p className="font-semibold mb-1">Long-Term ETF</p>
+              <p className="text-3xl font-bold">${gameState.investments.longTermETF.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</p>
+            </div>
+            <div className="value-card" style={{ minWidth: 280 }}>
+              <p className="font-semibold mb-1">Cash</p>
+              <p className="text-3xl font-bold">${gameState.cash.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</p>
+            </div>
+          </div>
+          <div className="text-center">
+            <button onClick={() => { setGameState(initializeGame()); setLastEventResult(null); setInvestAmount(1000); }} className="invest-btn" style={{ fontSize: '1.75rem', padding: '18px 42px' }}>Play Again</button>
+          </div>
         </div>
       </main>
     );
@@ -60,52 +90,63 @@ export default function GamePage() {
             <div className="graph-placeholder">Graph</div>
           </div>
           <div className="flex flex-col items-start gap-10">
-            <div className="speech-bubble w-full min-h-[260px] flex items-center justify-center text-xl font-semibold text-center">
+            <div className="speech-bubble w-full min-h-[260px] flex items-center justify-center text-center" style={{ padding:'40px 48px' }}>
               <div>
                 {currentEvent ? (
                   <>
-                    <p className="mb-2">Insight:</p>
-                    <p className="font-normal max-w-[520px] mx-auto">{currentEvent.houseInsight}</p>
+                    <p className="mb-5" style={{ fontSize:'28px', fontWeight:700 }}>Insight</p>
+                    <p className="max-w-[680px] mx-auto" style={{ fontSize:'20px', lineHeight:1.4, fontWeight:500 }}>{currentEvent.houseInsight}</p>
                   </>
-                ) : <p>...</p>}
+                ) : <p style={{ fontSize:'20px' }}>...</p>}
               </div>
             </div>
-            <div className="pixel-panel" style={{ width: 220, height: 170 }}>Sprite</div>
           </div>
         </div>
         <div className="pixel-shelf" />
-        <div className="value-grid mb-8">
-          <div className="value-card">Total Cash Savings: ${gameState.cash.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
-          <div className="value-card">Portfolio Total: ${totalValue.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
-          <div className="value-card">Total Profit: ${totalProfit.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+        <div className="mb-8 flex w-full gap-4 items-stretch">
+          <div className="flex flex-1 gap-4 min-w-0">
+            <div className="value-card flex-1" style={{ fontSize:'20px', lineHeight:1.15, padding:'18px 20px' }}>
+              <div style={{ fontWeight:700, fontSize:'16px', marginBottom:4 }}>Total Cash Savings</div>
+              <div style={{ fontWeight:700, fontSize:'24px' }}>${gameState.cash.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+            </div>
+            <div className="value-card flex-1" style={{ fontSize:'20px', lineHeight:1.15, padding:'18px 20px' }}>
+              <div style={{ fontWeight:700, fontSize:'16px', marginBottom:4 }}>Portfolio Total</div>
+              <div style={{ fontWeight:700, fontSize:'24px' }}>${totalValue.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+            </div>
+          </div>
+            <div className="value-card" style={{ width: 420, fontSize:'20px', lineHeight:1.15, padding:'18px 22px' }}>
+              <div style={{ fontWeight:700, fontSize:'16px', marginBottom:4, display:'flex', justifyContent:'space-between', alignItems:'baseline' }}>
+                <span>Net Profit</span>
+                <span style={{ fontSize:'13px', fontWeight:600, opacity:0.7 }}>(excl. contributions)</span>
+              </div>
+              <div className={investmentProfit >= 0 ? 'text-green-700' : 'text-red-700'} style={{ fontWeight:700, fontSize:'26px' }}>${investmentProfit.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+            </div>
         </div>
         <div className="flex flex-wrap items-center gap-10 mb-10">
           <div className="flex items-center gap-4">
-            <span className="pm-btn" onClick={() => setVolatileAmount(v => Math.max(0, v - 500))}>–</span>
-            <div className="amount-box">{volatileAmount}</div>
-            <span className="pm-btn" onClick={() => setVolatileAmount(v => Math.min(gameState.cash, v + 500))}>+</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="pm-btn" onClick={() => setLongAmount(v => Math.max(0, v - 500))}>–</span>
-            <div className="amount-box">{longAmount}</div>
-            <span className="pm-btn" onClick={() => setLongAmount(v => Math.min(gameState.cash, v + 500))}>+</span>
+            <span className="pm-btn" onClick={() => setInvestAmount(v => Math.max(0, v - 500))}>–</span>
+            <div className="amount-box">{investAmount}</div>
+            <span className="pm-btn" onClick={() => setInvestAmount(v => Math.min(gameState.cash, v + 500))}>+</span>
           </div>
         </div>
         <div className="action-grid mb-16">
           <div className="action-card" style={{ background: '#ff4545' }}>
             <div className="mb-4">
               <h3 className="text-2xl mb-2">Volatile ETF</h3>
-              <p className="text-sm mb-1">Current Invested:</p>
+              <p className="text-base font-semibold mb-1">Current Invested:</p>
               <p className="font-bold mb-2">${gameState.investments.volatileETF.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</p>
             </div>
             <div>
-              <div className="invest-btn" onClick={() => executeHit('volatileETF', volatileAmount)}>Hit</div>
+              <div className="flex flex-col gap-3">
+                <div className="invest-btn" onClick={() => executeHit('volatileETF')}>Hit</div>
+                <div className="invest-btn" style={{ background:'#222' }} onClick={() => handlePlayerAction({ type:'WITHDRAW', etf:'volatileETF', amount: investAmount })}>Withdraw</div>
+              </div>
             </div>
           </div>
           <div className="action-card stand" style={{ background: '#b7f879' }}>
             <div className="mb-4">
               <h3 className="text-2xl mb-2">Stand</h3>
-              <p className="text-sm mb-1">Cash on Hand:</p>
+              <p className="text-base font-semibold mb-1">Cash on Hand:</p>
               <p className="font-bold mb-2">${gameState.cash.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</p>
             </div>
             <div>
@@ -115,22 +156,27 @@ export default function GamePage() {
           <div className="action-card" style={{ background: '#ff4545' }}>
             <div className="mb-4">
               <h3 className="text-2xl mb-2">Long-Term ETF</h3>
-              <p className="text-sm mb-1">Current Invested:</p>
+              <p className="text-base font-semibold mb-1">Current Invested:</p>
               <p className="font-bold mb-2">${gameState.investments.longTermETF.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</p>
             </div>
             <div>
-              <div className="invest-btn" onClick={() => executeHit('longTermETF', longAmount)}>Hit</div>
+              <div className="flex flex-col gap-3">
+                <div className="invest-btn" onClick={() => executeHit('longTermETF')}>Hit</div>
+                <div className="invest-btn" style={{ background:'#222' }} onClick={() => handlePlayerAction({ type:'WITHDRAW', etf:'longTermETF', amount: investAmount })}>Withdraw</div>
+              </div>
             </div>
           </div>
         </div>
-        <div className="value-grid mb-24">
-          <div className="value-card" style={{ gridColumn: 'span 2 / auto' }}>
+        <div className="value-grid mb-24" style={{ fontSize:'18px' }}>
+          <div className="value-card" style={{ gridColumn: 'span 2 / auto', padding:'24px 28px', minHeight:140, display:'flex', alignItems:'center' }}>
             {lastEventResult ? (
               <>
-                <p className="font-semibold mb-1">Last Quarter Result:</p>
-                <p className="text-sm">{lastEventResult.marketCondition} | Volatile {(lastEventResult.volatileReturn * 100).toFixed(1)}% | Long {(lastEventResult.longTermReturn * 100).toFixed(1)}%</p>
+                <div>
+                  <p className="font-semibold mb-2" style={{ fontSize:'22px' }}>Last Quarter Result</p>
+                  <p style={{ fontSize:'18px', lineHeight:1.3 }}>{lastEventResult.marketCondition} | Volatile {(lastEventResult.volatileReturn * 100).toFixed(1)}% | Long {(lastEventResult.longTermReturn * 100).toFixed(1)}%</p>
+                </div>
               </>
-            ) : <p className="text-sm">Invest to see results next quarter.</p>}
+            ) : <p style={{ fontSize:'22px', fontWeight:600 }}>Invest to see results next quarter.</p>}
           </div>
         </div>
       </div>
