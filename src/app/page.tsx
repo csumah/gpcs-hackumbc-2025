@@ -3,15 +3,16 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center gap-14 bg-board text-white p-6">
+    <main className="min-h-screen flex flex-col items-center justify-start pt-[6vh] bg-board text-white p-6 select-none">
+      {/* Title */}
       <div
         className="relative pixel-art"
         style={{
-          width: "clamp(480px, 60vw, 840px)",
-          height: "clamp(480px, 60vw, 840px)",
+          // Increased by ~150px on min & max
+          width: "clamp(550px, 60vw, 1050px)",
+          aspectRatio: "5 / 3",
         }}
       >
-        {/* Title image. Place file at public/assets/ui/hit-or-holdings-title.png */}
         <Image
           src="/assets/ui/hit-or-holdings-title.png"
           alt="Hit or Holdings"
@@ -20,8 +21,26 @@ export default function Home() {
           priority
         />
       </div>
-      <Link href="/game" className="btn-pixel select-none text-xl px-14 py-5">
-        Start
+      {/* Start button (Option E narrower for hierarchy) */}
+      <Link
+        href="/game"
+        aria-label="Start Game"
+        className="pixel-art start-btn"
+        style={{
+          marginTop: "clamp(40px, 6vh, 96px)",
+          // Increased by ~140-160px; remain narrower than title
+          width: "clamp(460px, 46vw, 780px)",
+          aspectRatio: "13 / 3",
+          position: "relative",
+        }}
+      >
+        <Image
+          src="/assets/ui/button-start.png"
+          alt="Start"
+          fill
+          className="object-contain"
+          priority
+        />
       </Link>
     </main>
   );
