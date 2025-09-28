@@ -130,57 +130,70 @@ export function processQuarter(
   currentState: PlayerState,
   action: PlayerAction
 ): PlayerState {
-  const newState = JSON.parse(JSON.stringify(currentState));
+  // Deep clone to avoid mutating original
+  const newState: PlayerState = JSON.parse(JSON.stringify(currentState));
   if (newState.isGameOver) return newState;
 
-  const currentYearData = gameData.find(y => y.year === newState.year)!;
-  const currentEvent = currentYearData.events.find(e => e.quarter === newState.quarter)!;
-
-  newState.cash += 2500;
-  newState.savingsOnlyPortfolio += 2500;
-
+  // HIT and WITHDRAW should NOT advance time anymore. They are intra-quarter adjustments.
   if (action.type === 'HIT') {
     const cost = Math.min(action.amount, newState.cash);
     if (cost > 0) {
       newState.cash -= cost;
       newState.investments[action.etf] += cost;
     }
-  } else if (action.type === 'WITHDRAW') {
+    return newState; // No returns applied yet.
+  }
+
+  if (action.type === 'WITHDRAW') {
     const amount = Math.min(action.amount, newState.investments[action.etf]);
     if (amount > 0) {
       newState.investments[action.etf] -= amount;
       newState.cash += amount;
     }
+    return newState; // Still same quarter.
   }
 
-  newState.investments.volatileETF *= (1 + currentEvent.returns.volatileETF);
-  newState.investments.longTermETF *= (1 + currentEvent.returns.longTermETF);
+  // At this point only STAND remains -> advance the quarter & apply economics.
+  if (action.type === 'STAND') {
+    const currentYearData = gameData.find(y => y.year === newState.year)!;
+    const currentEvent = currentYearData.events.find(e => e.quarter === newState.quarter)!;
 
-  const quarterlyInflation = currentYearData.inflation / 4;
-  newState.cash *= (1 - quarterlyInflation);
-  newState.savingsOnlyPortfolio *= (1 - quarterlyInflation);
+    // Quarterly contribution / income occurs at end of quarter just before returns (feel free to move earlier if design changes)
+    newState.cash += 2500;
+    newState.savingsOnlyPortfolio += 2500;
 
-  if (newState.quarter === 4) {
-    const totalPlayerValue = newState.cash + newState.investments.volatileETF + newState.investments.longTermETF;
-    newState.portfolioHistory.push({
-      year: newState.year,
-      value: totalPlayerValue,
-      cash: newState.cash,
-      volatileETF: newState.investments.volatileETF,
-      longTermETF: newState.investments.longTermETF,
-    });
-    newState.savingsHistory.push({ year: newState.year, value: newState.savingsOnlyPortfolio });
-    
-    newState.year += 1;
-    newState.quarter = 1;
-  } else {
-    newState.quarter += 1;
+    // Apply returns to invested capital
+    newState.investments.volatileETF *= (1 + currentEvent.returns.volatileETF);
+    newState.investments.longTermETF *= (1 + currentEvent.returns.longTermETF);
+
+    // Inflation degrades cash & alternate savings-only portfolio
+    const quarterlyInflation = currentYearData.inflation / 4;
+    newState.cash *= (1 - quarterlyInflation);
+    newState.savingsOnlyPortfolio *= (1 - quarterlyInflation);
+
+    // Advance the calendar
+    if (newState.quarter === 4) {
+      const totalPlayerValue = newState.cash + newState.investments.volatileETF + newState.investments.longTermETF;
+      newState.portfolioHistory.push({
+        year: newState.year,
+        value: totalPlayerValue,
+        cash: newState.cash,
+        volatileETF: newState.investments.volatileETF,
+        longTermETF: newState.investments.longTermETF,
+      });
+      newState.savingsHistory.push({ year: newState.year, value: newState.savingsOnlyPortfolio });
+      newState.year += 1;
+      newState.quarter = 1;
+    } else {
+      newState.quarter += 1;
+    }
+
+    if (newState.year > gameData.length) {
+      newState.isGameOver = true;
+    }
+    return newState;
   }
 
-  if (newState.year > gameData.length) {
-    newState.isGameOver = true;
-  }
-
-  return newState;
+  return newState; // Fallback (should not reach for defined actions)
 }
 
