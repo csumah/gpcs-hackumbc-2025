@@ -181,7 +181,35 @@ export default function GamePage() {
         </div>
         <div className="layout-grid mb-6">
           <div>
-            <div className="graph-placeholder">Graph</div>
+            {/* Keep the original graph placeholder footprint, overlay the chart absolutely inside it */}
+            <div className="graph-placeholder" style={{ position: 'relative' }}>
+              {/* Chart overlay fills the box exactly without changing layout */}
+              <div style={{ position: 'absolute', inset: 0 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart
+                    data={gameState.portfolioHistory.map(ph => ({
+                      label: ph.year === 0 ? 'Start' : `Y${ph.year}`,
+                      portfolio: ph.value,
+                      savingsOnly: (gameState.savingsHistory.find(s => s.year === ph.year)?.value ?? null),
+                    }))}
+                    margin={{ top: 8, right: 12, left: 12, bottom: 8 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="label" tick={{ fontSize: 12 }} />
+                    <YAxis tickFormatter={(v) => `$${(Number(v) / 1000)}k`} tick={{ fontSize: 12 }} />
+                    <Tooltip formatter={(value: any, name: any) => [`$${Number(value).toFixed(2)}`, name]} />
+                    <Legend wrapperStyle={{ fontSize: 12 }} />
+                    <Line type="monotone" dataKey="portfolio" name="Portfolio" stroke="#1976D2" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 6 }} />
+                    <Line type="monotone" dataKey="savingsOnly" name="Savings Only" stroke="#8884d8" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 6 }} strokeDasharray="6 4" connectNulls={true} />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Keep the visible placeholder label for accessibility/visual design (behind the chart) */}
+              <div aria-hidden style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', color: 'rgba(0,0,0,0.12)', fontWeight: 700 }}>
+                Graph
+              </div>
+            </div>
           </div>
           <div className="flex flex-col items-start gap-10">
             <div className="speech-bubble w-full min-h-[320px] flex items-start justify-start" style={{ padding:'50px 60px', position:'relative', textAlign:'left' }}>
