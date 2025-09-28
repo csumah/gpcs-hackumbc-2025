@@ -1,4 +1,4 @@
-import { PlayerState, MarketEvent } from '@/lib/gamelogic';
+import { PlayerState, MarketEvent } from '../lib/gamelogic';
 
 interface CardProps {
   gameState: PlayerState;
@@ -13,14 +13,14 @@ const ReturnIndicator = ({ value }: { value: number }) => {
   const sign = isPositive ? '+' : '';
   return (
     <span className={color}>
-      {sign}{(value * 100).toFixed(1)}%
+      ({sign}{(value * 100).toFixed(1)}%)
     </span>
   );
 };
 
 export default function Card({ gameState, marketEvent, lastEventResult }: CardProps) {
   const totalInvested = gameState.investments.volatileETF + gameState.investments.longTermETF;
-  
+
   return (
     <div className="bg-gray-800 p-6 rounded-lg shadow-xl mb-4 border border-gray-700">
       {/* Top row with main stats */}
@@ -31,33 +31,35 @@ export default function Card({ gameState, marketEvent, lastEventResult }: CardPr
         </div>
         <div>
           <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Cash</h3>
-          <p className="text-2xl font-bold text-green-400">${gameState.cash.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
+          <p className="text-2xl font-bold text-green-400">${gameState.cash.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+        </div>
+        {/* UPDATED: Show individual ETF values */}
+        <div>
+          <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Volatile ETF</h3>
+          <p className="text-2xl font-bold text-red-400">${gameState.investments.volatileETF.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
         </div>
         <div>
-          <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Invested</h3>
-          <p className="text-2xl font-bold text-blue-400">${totalInvested.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
-        </div>
-         <div>
-          <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Total Value</h3>
-          <p className="text-2xl font-bold text-white">${(gameState.cash + totalInvested).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
+          <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Long-Term ETF</h3>
+          <p className="text-2xl font-bold text-blue-400">${gameState.investments.longTermETF.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
         </div>
       </div>
 
-      {/* Last Quarter's Results */}
-      {lastEventResult && (
-        <div className="bg-gray-900/50 p-4 rounded-lg mb-6 text-center">
-            <h4 className="text-md font-semibold text-gray-300 mb-2">Last Quarter's Result: <span className="italic text-white">{lastEventResult.marketCondition}</span></h4>
-            <div className="flex justify-center gap-6 text-lg">
-                <p>Volatile ETF: <ReturnIndicator value={lastEventResult.volatileReturn} /></p>
-                <p>Long-Term ETF: <ReturnIndicator value={lastEventResult.longTermReturn} /></p>
-            </div>
+      {/* Bottom row for market insights */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="text-center bg-gray-700/50 p-4 rounded-lg">
+          <h4 className="text-md font-semibold text-gray-300">House Insight for Q{gameState.quarter}</h4>
+          <p className="text-lg italic text-yellow-300 mt-1">"{marketEvent?.houseInsight}"</p>
         </div>
-      )}
-      
-      {/* House Insight for the upcoming quarter */}
-      <div className="text-center bg-gray-700/70 p-4 rounded-lg">
-        <h4 className="text-md font-semibold text-gray-300">House Insight (Upcoming Quarter):</h4>
-        <p className="text-lg italic text-yellow-300 mt-1">"{marketEvent?.houseInsight || 'Awaiting next year...'}"</p>
+        <div className="text-center bg-gray-700/50 p-4 rounded-lg">
+           <h4 className="text-md font-semibold text-gray-300">Last Quarter's Result</h4>
+           {lastEventResult ? (
+            <p className="text-lg mt-1">
+              {lastEventResult.marketCondition}: Volatile <ReturnIndicator value={lastEventResult.volatileReturn} />, Long-Term <ReturnIndicator value={lastEventResult.longTermReturn} />
+            </p>
+          ) : (
+            <p className="text-lg mt-1 text-gray-400">Make your first move to see results.</p>
+          )}
+        </div>
       </div>
     </div>
   );
