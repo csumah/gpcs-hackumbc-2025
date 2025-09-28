@@ -166,7 +166,7 @@ export default function GamePage() {
             </div>
           </div>
           <div className="text-center">
-            <button onClick={() => { setGameState(initializeGame()); setLastEventResult(null); setInvestAmount(1000); }} className="invest-btn" style={{ fontSize: '1.75rem', padding: '18px 42px' }}>Play Again</button>
+            <a href="/postgame/limits" className="invest-btn" style={{ fontSize: '1.75rem', padding: '18px 42px', display:'inline-block' }}>Continue →</a>
           </div>
         </div>
       </main>
